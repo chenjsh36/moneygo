@@ -4,16 +4,23 @@ head
 	meta(charset="UTF-8")
 	title User | Login
 body
-	if (authenticated)
-		p welcome back, #{me.first}
-		a(href="/logout") Logout
-	else 
-		h1 User Login
-		form(action="/user/login", method="POST")
-			label Username
-			input(type="text", name="username")
-			label Password
-			input(type="password", name="password")
-			input(type="submit")
+	div.sidebar
+		a(href="/user/reg") 注册
+		if (authenticated)
+			a(href="/user/logout") 退出
+		else
+			a(href="/user/login") 登录
+		a(href="/user/info") 主页
+	div.content
+		if (authenticated)
+			p welcome back, #{username}
+		else 
+			h1 User Login
+			form(action="/user/login", method="POST")
+				label Username
+				input(type="text", name="username")
+				label Password
+				input(type="password", name="password")
+				input(type="submit")
 
 	

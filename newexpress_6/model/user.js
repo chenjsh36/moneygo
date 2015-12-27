@@ -1,4 +1,8 @@
 /**
+ * 数据库定义
+ */
+
+/**
  * 模块依赖
  * @type {module}
  */
@@ -23,11 +27,32 @@ url = 'mongodb://127.0.0.1:27017/newexpress'
 // 	console.log ('we connect!');
 // });
 
+var connect = mongoose.connect(url);
+
+// 定义对象模型
+var UserScheme = new Schema({
+	real_name: {type: String, default: '匿名'},
+	password: {type: String, default: '123'},
+	mail: {type: String, default: ''},
+	birth: {type: Date, default: Date.now}
+
+});
+
+// 访问user对象
+// (注意)NOTE: methods must be added to the schema before compiling it with mongoose.model()
+UserScheme.methods.speak = function() {
+	var greeting = this.real_name ? 'My name is ' + this.real_name : 'I don\'t have a name...';
+	console.log(greeting);
+}
+
+mongoose.model('User', UserScheme);
+var User = mongoose.model('User');
+
 
 exports.connect = function(callback) {
 	console.log('user_db connect');
-	mongoose.connect(url);
-
+	// mongoose.connect(url);
+	return connect;
 }
 exports.disconnect = function(callback) {
 	console.log('user_db disconnect!');
@@ -37,20 +62,6 @@ exports.disconnect = function(callback) {
 exports.setup = function(callback) {
 	callback(null);
 }
-
-// 定义对象模型
-var UserScheme = new Schema({
-	real_name: String,
-	password: String,
-	mail: String,
-	birth: Date
-
-});
-
-// 访问user对象
-
-mongoose.model('User', UserScheme);
-var User = mongoose.model('User');
 
 exports.add = function(user, callback) {
 	var new_user = new User();
@@ -127,7 +138,7 @@ exports.findUser = function(user, done) {
 }
 
 var findUserById = exports.findUserById = function(id, callback) {
-	Todo.findOne({_id: id}, function(err, doc) {
+	User.findOne({_id: id}, function(err, doc) {
 		if (err) {
 			callback(err, null);
 		} 

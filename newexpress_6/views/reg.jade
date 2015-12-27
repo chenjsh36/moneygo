@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+html(lang="en")
+head
+	meta(charset="UTF-8")
+	title 注册
+body
+
+	div.sidebar
+		a(href="/user/reg") 注册
+		a(href="/user/login") 登录
+		a(href="/user/info") 主页
+	div.content
+		h1 To register
+		if (success == false)
+			.err #{err}
+		form(action="/user/reg", method="post")
+			label(for="username") username
+			input(type="text" name="username")
+
+			label(for="password") password
+			input(type="password" name="password")
+
+			label(for="confirm_password") confirm password
+			input(type="password")
+
+			input(type="submit" value="submit")
