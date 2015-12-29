@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+html(lang="en")
+head
+	meta(charset="UTF-8")
+	title My Finances
+
+body
+	h1 Here is finance list
+	//- p #{flist}
+	
+	- flist = #{flist} 
+	each item in flist
+		li item
+	
+	div
+		form(action="/finance/add" method="post")
+			label(for="number") 金额
+			input(type="text" name="number")
+			label(for="number") 类型
+			input(type="text" name="type_id")
+			label(for="number") 时间
+			input(type="text" name="date")
+			label(for="number") 标签
+			input(type="text" name="tag_arr")
+			input(type="submit" value="提交")

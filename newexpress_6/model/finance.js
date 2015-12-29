@@ -31,27 +31,27 @@ var Schema = mongoose.Schema;
 // var connect = mongoose.connect(url);
 
 // 定义对象模型
-var UserScheme = new Schema({
-	real_name: {type: String, default: '匿名'},
-	password: {type: String, default: '123'},
-	mail: {type: String, default: ''},
-	birth: {type: Date, default: Date.now}
-
+var FinanceSchema = new Schema({
+	belong_id: {type: String},  
+	number: {type: Number, default: '0.00'},
+	date: {type: Date, default: Date.now},
+	type_id: {type: Number, default: '0'},// learning\playing\living
+	tag_arr: [String]
 });
 
 // 访问user对象
 // (注意)NOTE: methods must be added to the schema before compiling it with mongoose.model()
-UserScheme.methods.speak = function() {
-	var greeting = this.real_name ? 'My name is ' + this.real_name : 'I don\'t have a name...';
+FinanceSchema.methods.speak = function() {
+	var greeting = this.number ? 'This FinanceSchema is ' + this.number : 'I don\'t have a number...';
 	console.log(greeting);
 }
 
-mongoose.model('User', UserScheme);
-var User = mongoose.model('User');
+mongoose.model('Finance', FinanceSchema);
+var Finance = mongoose.model('Finance');
 
 
 exports.connect = function(callback) {
-	console.log('user_db connect');
+	console.log('finance connect');
 	// mongoose.connect(url);
 	return connect;
 }
@@ -64,14 +64,15 @@ exports.setup = function(callback) {
 	callback(null);
 }
 
-exports.add = function(user, callback) {
-	var new_user = new User();
-	new_user.real_name = user.real_name;
-	new_user.password = user.password;
-	new_user.mail = user.mail;
-	new_user.birth = user.birth;
+exports.add = function(finance, callback) {
+	var new_finance = new Finance();
+	new_finance.belong_id = finance.belong_id;
+	new_finance.number = finance.number;
+	new_finance.date = finance.date;
+	new_finance.type_id = finance.type_id;
+	new_finance.tag_arr = finance.tag_arr;
 
-	new_user.save(function(err) {
+	new_finance.save(function(err) {
 		if (err) {
 			callback(err);
 		} else {
@@ -81,7 +82,7 @@ exports.add = function(user, callback) {
 }
 
 exports.delete = function(id, callback) {
-	exports.findUserById(id, function(err, doc) {
+	exports.findFinanceById(id, function(err, doc) {
 		if (err) {
 			callback(err);
 		} else {
@@ -92,7 +93,7 @@ exports.delete = function(id, callback) {
 }
 
 exports.editMs = function(id, key, val, callback) {
-	exports.findUserById(id, function(err, doc) {
+	exports.findFinanceById(id, function(err, doc) {
 		if (err) {
 			callback(err);
 		} else {
@@ -110,11 +111,11 @@ exports.editMs = function(id, key, val, callback) {
 
 
 exports.allToUser = function(callback) {
-	User.find({}, callback);
+	Finance.find({}, callback);
 }
 
 exports.forAll = function(doEach, done) {
-	User.find({}, function(err, docs) {
+	Finance.find({}, function(err, docs) {
 		if (err) {
 			done(err,null);
 		}
@@ -125,21 +126,21 @@ exports.forAll = function(doEach, done) {
 	});
 }
 
-exports.findUser = function(user, done) {
+exports.findFinance = function(finance, done) {
 	console.log('findUser:', user);
-	User.find(user, function(err, doc) {
+	Finance.find(finance, function(err, doc) {
 		if (err) {
-			console.log('findUser: is err');
+			console.log('findFinance: is err');
 			done(err, null);
 		} else {
-			console.log('findUser: no err');
+			console.log('findFinance: no err');
 			done(null, doc);
 		}
 	})
 }
 
-var findUserById = exports.findUserById = function(id, callback) {
-	User.findOne({_id: id}, function(err, doc) {
+var findFinanceById = exports.findFinanceById = function(id, callback) {
+	Finance.findOne({_id: id}, function(err, doc) {
 		if (err) {
 			callback(err, null);
 		} 
