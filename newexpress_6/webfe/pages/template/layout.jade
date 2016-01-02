@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+html(lang="en")
+head
+	meta(charset="UTF-8")
+	title #{title}
+
+	//- third part lib
+	link(rel="stylesheet", href="/static/lib/semantic/semantic.min.css")
+	block styles
+		p block of styles
+	
+body
+	//- 后台返回的一些状态
+	.hide.status
+		input(type="text" id="stat-auth" value="#{authenticated}")
+	//- 包含topbar模板的一段代码
+	include include_topbar
+	//- 内容
+	block content
+		p block of content
+	//- 页脚
+	block footer
+		p block of footer
+
+	//- third part lib
+	script(src="/static/lib/jquery/jquery.min.js")
+	script(src="/static/lib/semantic/semantic.min.js")
+	block scripts
+		p block of script

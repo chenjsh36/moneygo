@@ -91,12 +91,19 @@ exports.delete = function(id, callback) {
 	});
 }
 
-exports.editMs = function(id, key, val, callback) {
-	exports.findUserById(id, function(err, doc) {
+exports.editMs = function(name, newms, callback) {
+	exports.findUserByRealname(name, function(err, doc) {
 		if (err) {
 			callback(err);
 		} else {
-			doc.key = val;
+			for (key in newms) {
+				if (key !== '_id') {
+					console.log('editMs :', key);
+					doc[key] = newms[key];
+				} else {
+					console.log('id could not change');
+				}
+			}
 			doc.save(function(err) {
 				if (err) {
 					callback(err);
@@ -127,7 +134,7 @@ exports.forAll = function(doEach, done) {
 
 exports.findUser = function(user, done) {
 	console.log('findUser:', user);
-	User.find(user, function(err, doc) {
+	User.findOne(user, function(err, doc) {
 		if (err) {
 			console.log('findUser: is err');
 			done(err, null);
@@ -142,8 +149,19 @@ var findUserById = exports.findUserById = function(id, callback) {
 	User.findOne({_id: id}, function(err, doc) {
 		if (err) {
 			callback(err, null);
+		} else {
+			callback(null, doc);	
 		} 
-		callback(null, doc);
 	});
 }
 
+var findUserByRealname = exports.findUserByRealname = function(name, callback) {
+	User.findOne({real_name: name}, function(err, doc) {
+		if (err) {
+			callback(err, null);
+		}
+		else {
+			callback(null, doc);
+		}
+	})
+}

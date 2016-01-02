@@ -128,7 +128,7 @@ app.get(['/', '/login'], function (req, res, next) {
 		isLogin = true;
 		username = req.cookies.username;
 	}
-	res.render('login', {authenticated: isLogin, username: username});
+	res.render('login', {authenticated: isLogin, username: username, title: 'Log-in'});
 });
 
 // 登陆请求
@@ -145,11 +145,19 @@ app.post('/login', upload.array(), function (req, res, next) {
 		if (err) {
 			console.log(err);
 			delCookie(res, 'username');
-			res.redirect('/user', {success: false, err: err.errors});
+			res.redirect('/user/login', {success: false, err: err.errors});
 		} else {
-			console.log('pass auth');
-			setCookie(res, 'username', search_user.real_name, 30);
-			res.redirect('/user/info');
+			console.log('login post:', doc);
+			if (doc === null || doc.length === 0) {
+				console.log('not exist');
+				res.render('login', {success: false, err: '用户名不存在或者密码错误！'});
+			}
+			else {
+				console.log('pass auth');
+				setCookie(res, 'username', search_user.real_name, 30);
+				res.redirect('/user/info');				
+			}
+
 		}
 	});
 });
@@ -168,9 +176,61 @@ app.get('/info', function (req, res, next) {
 	username = getCookie(req, 'username');
 	if (typeof username !== 'undefined') {
 		isLogin = true;
+		user_db.findUser({real_name: username}, function(err, doc) {
+			console.log('find doc is :', doc);
+			res.render('info', {authenticated: isLogin, username: username, user: doc})
+		})
 	}
-	res.render('info', {authenticated: isLogin, username: username})
+	else {
+		res.redirect('/user/login');
+	}
+	
 });
+
+app.post('/info', function (req, res, next) {
+	var isLogin = false,
+		username = undefined
+		;
+	username = getCookie(req, 'username');
+	if (typeof username !== 'undefined') {
+		isLogin = true;
+		var username_ = req.body.username
+			, password_ = req.body.password
+			, mail_ = req.body.mail
+			, birth_ = req.body.birth
+			;
+		var newMs = {
+			real_name: username_,
+			password: password_,
+			mail: mail_,
+			birth: birth_,			
+		};
+		console.log('更改用户信息:', newMs);
+		
+		if (username === username_) {
+			user_db.editMs(username, newMs, function(err, doc) {
+				if (err) {
+					// edit fail
+					console.log('edit user ms fail');
+					res.redirect('/user/login');
+				} else {
+					console.log('edit user ms success');
+					res.redirect('/user/info');
+				}
+			})
+		} else {
+			console.log('cookie 和 表单 用户名不一致！')
+			res.redirect('/user/login');
+		}
+
+	}
+	else {
+		console.log('未登录');
+		res.redirect('/user/login');
+	}
+	
+});
+
 
 app.get('/badreq', function (req, res, next) {
 	res.status(400).send('Bad request');

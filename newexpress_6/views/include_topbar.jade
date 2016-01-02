@@ -1,0 +1,13 @@
+//- 顶部栏样式
+.ui.inverted.fixed.menu
+	.ui.container
+		a.item(href="/") 首页
+		.right.menu
+			if (authenticated)
+				.item 
+					|Hello, 
+					a(href="/user/info") #{username}
+				a.item(href="/user/logout") 退出
+			else
+				a.item(href="/user/login") 登录
+			a.ui.inverted.item(href="/user/reg") 注册
