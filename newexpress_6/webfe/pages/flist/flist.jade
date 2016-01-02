@@ -6,11 +6,13 @@ head
 
 body
 	h1 Here is finance list
-	
+	//- p #{flist}
 	//- - flist = #{flist} 
 	//- each item in flist
 	//- 	li item
-	
+	if (flist)
+		- for (var e in flist)
+			p= flist[e]
 	div
 		form(action="/finance/add" method="post")
 			label(for="number") 金额
