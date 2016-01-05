@@ -110,7 +110,7 @@ exports.editMs = function(id, key, val, callback) {
 }
 
 
-exports.allToUser = function(callback) {
+exports.allToFinance = function(callback) {
 	Finance.find({}, callback);
 }
 

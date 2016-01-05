@@ -54,7 +54,7 @@ app.use(cookieParser());
 // 用户登陆、注册、退出
 
 app.use('/user', account_r);
-app.use('/finance', finance_r);
+app.use('/', finance_r);
 // 个人财务支出情况
 // app.use('/cash', cash_r);
 

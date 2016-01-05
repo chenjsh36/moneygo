@@ -40,15 +40,17 @@ var checkLogin = function(req, res, next) {
 		next();
 	}
 }
-app.use(checkLogin);
+// app.use(checkLogin);
 
 /**
  * 路由级
  */
 
-// 注册页面
-app.get('/list', function(req, res) {
-	flist = [{number:12}];
+app.get(['/', '/list'], function(req, res) {
+	var isLogin = true
+		, username = getCookie(req, 'username')
+		, flist = []
+		;
 
 	finance_db.forAll(function(err, doc){
 		if (err) {
@@ -59,13 +61,43 @@ app.get('/list', function(req, res) {
 	}, function(err, doc) {
 		if (err) {
 			console.log('error exist', err.errors);
-			res.render('flist', {title: '消费记录', success: false, flist: []});
+			res.render('flist', {title: '消费记录', success: false, flist: [], authenticated: isLogin, username: username});
 		} else {
-			res.render('flist', {title: '消费记录', flist: flist});
+			res.render('flist', {title: '消费记录', flist: flist, authenticated: isLogin, username: username});
 		}
 	});
 });
-
+// 获取该用户的所有数据
+app.get('/getList', function(req, res) {
+	// var username = getCookie(req, 'username')
+	// 	, user_id = ''
+	// 	, user_flist
+	// 	;
+	// user = user_db.findUser({real_name: username}, function(err, doc) {
+	// 	if (err) {
+	// 		console.log('使用cookie查找该用户名找不到！');
+	// 		res.redirect('/user/login');
+	// 	} else {
+	// 		user_id = doc['_id'];
+	// 		finance_db.find({belong_id: user_id}, function(err, docs) {
+	// 			if (err) {
+	// 				console.log('查到该用户的财务数据失败！');
+	// 				res.redirect('/');
+	// 			} else {
+	// 				res.json(docs);
+	// 			}
+	// 		})
+	// 	}
+	// })
+	finance_db.allToFinance(function(err, doc) {
+		if (err) {
+			console.log('finde all err', err);
+			res.json({retCode: 200, err: err});
+		} else {
+			res.json(doc);
+		}
+	})
+});
 app.post('/add', function(req, res) {
 	var number = req.body.number
 		, date = req.body.date

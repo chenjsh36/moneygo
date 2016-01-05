@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-html(lang="en")
-head
-	meta(charset="UTF-8")
-	title My Finances
+extends layout
+block styles
+	link(rel="stylesheet", href="/static/pages/login/login.css")
 
-body
+block content
 	h1 Here is finance list
 	//- p #{flist}
 	//- - flist = #{flist} 
@@ -23,4 +21,10 @@ body
 			input(type="text" name="date")
 			label(for="number") 标签
 			input(type="text" name="tag_arr")
-			input(type="submit" value="提交")
+			input(type="submit" value="提交")	
+							
+			
+block footer
+
+block scripts
+	script(src="/static/pages/flist/flist.js")

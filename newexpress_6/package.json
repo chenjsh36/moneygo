@@ -51,6 +51,7 @@
     "mongoose": "*",
     "multer": "1.0.5",
     "nodemon": "^1.8.1",
+    "q": "^1.4.1",
     "run-sequence": "^1.1.5"
   }
 }
