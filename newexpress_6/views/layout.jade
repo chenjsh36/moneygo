@@ -6,12 +6,13 @@ html(lang="en")
 
 		//- third part lib
 		link(rel="stylesheet", href="/static/lib/semantic/semantic.min.css")
+		link(rel="stylesheet", href="/static/pages/template/layout.css")
 		block styles
 			p block of styles
 		
 	body
 		//- 后台返回的一些状态
-		.hide.status
+		.hide.hidden.status
 			input(type="text" id="stat-auth" value="#{authenticated}")
 		//- 包含topbar模板的一段代码
 		include include_topbar

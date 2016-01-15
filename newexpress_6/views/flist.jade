@@ -1,29 +1,42 @@
 extends layout
 block styles
-	link(rel="stylesheet", href="/static/pages/login/login.css")
+	link(rel="stylesheet", href="/static/pages/flist/flist.css")
 
 block content
-	h1 Here is finance list
-	//- p #{flist}
-	//- - flist = #{flist} 
-	//- each item in flist
-	//- 	li item
-	if (flist)
-		- for (var e in flist)
-			p= flist[e]
-	div
-		form(action="/finance/add" method="post")
-			label(for="number") 金额
-			input(type="text" name="number")
-			label(for="number") 类型
-			input(type="text" name="type_id")
-			label(for="number") 时间
-			input(type="text" name="date")
-			label(for="number") 标签
-			input(type="text" name="tag_arr")
-			input(type="submit" value="提交")	
-							
-			
+	//- if (flist)
+	//- 	- for (var e in flist)
+	//- 		p= flist[e]
+	//- div
+	//- 	form(action="/finance/add" method="post")
+	//- 		label(for="number") 金额
+	//- 		input(type="text" name="number")
+	//- 		label(for="number") 类型
+	//- 		input(type="text" name="type_id")
+	//- 		label(for="number") 时间
+	//- 		input(type="text" name="date")
+	//- 		label(for="number") 标签
+	//- 		input(type="text" name="tag_arr")
+	//- 		input(type="submit" value="提交")
+	.ui.grid.finance
+		.grey.four.wide.column
+			.ui.secondary.vertical.inverted.fluid.menu
+				.item.active 财务列表
+				.item 财务状况
+				.item 
+					.header 统计信息
+					.menu
+						.item 支出收入
+						.item 花费范围
+
+		.olive.twelve.wide.column
+		//- 		if (flist)
+		//- 			- for (var e in flist)
+		//- 				p= flist[e]
+		//- 				div.ui.ignored.message
+		//- 					span= flist[e]['date']
+		//- 					span= flist[e]['number']
+
+		
 block footer
 
 block scripts

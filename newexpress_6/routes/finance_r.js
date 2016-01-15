@@ -92,9 +92,9 @@ app.get('/getList', function(req, res) {
 	finance_db.allToFinance(function(err, doc) {
 		if (err) {
 			console.log('finde all err', err);
-			res.json({retCode: 200, err: err});
+			res.json({retCode: '400', err: err, data: []});
 		} else {
-			res.json(doc);
+			res.json({ret_code: '200', data: doc});
 		}
 	})
 });
