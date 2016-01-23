@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+html(lang="en")
+head
+	meta(charset="UTF-8")
+	title Document
+body
+	h1 test page
+	script(type='text/javascript').
+		onmessage = function (event) {
+			console.log('on message!', event);
+			var arguments = JSON.parse(event.data);
+			run(arguments.start, arguments.end);
+		};
+		function run(start, end) {
+			var n = start;
+			while(n < end) {
+				var k = Math.sqrt(n);
+				var found = false;
+				for (var i = 2; !found && i <= k; ++i) {
+					found = n % i === 0;
+					}
+				if (!found) {
+					postMessage(n.toString());
+					}
+				n++;
+			}
+		}
+		if (typeof Worker !== 'undefined') {
+			var w = new Worker('prime.js');
+			w.onmessage = function(event) {
+				console.log(event);
+			};
+			var args = {start: 100, end: 1000};
+			w.postMessage(JSON.stringify(args));
+		} else {
+			console.log('worker is undefined');
+		}
+		console.log('end js');

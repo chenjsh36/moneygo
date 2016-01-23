@@ -241,7 +241,8 @@ gulp.task('browsersync', function() {
     // server: {
     //   baseDir: root.dev
     // }
-    proxy: 'http://192.168.1.119:3080/'
+    // proxy: 'http://192.168.1.119:3080/'
+    proxy: 'http://localhost:3080/'
   });
 });
 

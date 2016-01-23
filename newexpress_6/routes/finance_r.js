@@ -45,6 +45,9 @@ var checkLogin = function(req, res, next) {
 /**
  * 路由级
  */
+app.get('/test', function(req, res) {
+	res.render('test', {title: 'test'})
+});
 
 app.get(['/', '/list'], function(req, res) {
 	var isLogin = true

@@ -1,6 +1,5 @@
 EventEmitter = require('../../lib/eventemitter2/eventemitter2').EventEmitter2
 eventbus = require('../../own_modules/eventbus/eventbus')
-
 # PageVisibility = require('../../own_modules/PageVisibility')
 
 # statusChange = (e) ->
@@ -21,25 +20,41 @@ eventbus = require('../../own_modules/eventbus/eventbus')
 # 		console.log 'Error', data
 
 # })
-
 class Flist extends EventEmitter
 	constructor: (options)->
+		# super.apply @, arguments
 		context = @
 		@defaults = 
 			name: @getVal(options.name, 'cjj')
 			container: @getVal(options.container, $('body'))
 			elem: null
+			f_list_table: new FListTable({
+				container: @getVal(options.container, $('body'))
+				flist: context
+			}) 
 			eventbus: @getVal(options.eventbus, null)
 		@datas = null
 
 		@.on 'Flist:request', @request
-		eventbus.on 'Flist:request', @request
+		@defaults.eventbus.on 'Flist:request', @request
+
+		@.on 'FList:dataChange', @dataChange
 
 		callback_ = (data) ->
 			context.calData(data)
 			context.render()
 		eventbus.emit 'Flist:request', callback_
 	
+	###*
+	 * 更新数据
+	###
+	dataChange: (data) ->
+		context = @
+		console.log 'Flist: dataChange:', data
+		setTimeout(()->
+			console.log 'to emit '
+			context.defaults.f_list_table.emit 'FListTable:dataChange', {}
+		, 5000)
 
 	###*
 	 * 处理数据
@@ -71,7 +86,6 @@ class Flist extends EventEmitter
 		@datas = 
 			has_data: has_data
 			flist: flist
-		console.log @datas
 		return has_data
 
 	###*
@@ -83,11 +97,11 @@ class Flist extends EventEmitter
 	getVal: (obj, defaults) ->
 		return if obj? then obj else defaults
 	
-	initHtml: () ->
-		c_html_ = """
-			<div class="olive twelve wide column"></div>
-		"""
-		@defaults.container.html c_html_ 
+	# initHtml: () ->
+	# 	c_html_ = """
+	# 		<div class="olive twelve wide column"></div>
+	# 	"""
+	# 	@defaults.container.html c_html_ 
 
 	###*
 	 * 读取对象的datas并渲染对象
@@ -95,35 +109,8 @@ class Flist extends EventEmitter
 	###
 	render: () ->
 		if @datas.has_data
-			table_html = """
-				<table class="ui selectable inverted table">
-				  	<thead>
-					    <tr>
-					        <th>date</th>
-					        <th>cost</th>
-					        <th class="left aligned">type</th>
-					    </tr>
-				    </thead>
-				    <tbody>
-				  	</tbody>
-				</table>
-			"""
-			table = $(table_html)
-			items_html = ''
-			$.each @datas.flist, (i, e) ->
-				date_ = e.date.slice(0, 10)
-				cost_ = e.number
-				type_ = e.tag_arr.join(' ')
-				item_html = """
-					<tr>
-						<td>#{date_}</td>
-						<td>#{cost_}</td>
-						<td>#{type_}</td>
-					</tr>
-				"""
-				items_html += item_html
-			table.find('tbody').html(items_html)
-			@defaults.container.append(table)
+			# eventbus.emit 'FListTable:renderData', @datas
+			@defaults.f_list_table.emit 'FListTable:renderData', @datas
 		else
 			console.log '暂无数据，请创建'	
 
@@ -138,7 +125,6 @@ class Flist extends EventEmitter
 			dataType: 'json'
 			url: '/getList'
 			success: (data) ->
-				console.log data
 				callback(data)
 			error: (data) ->
 				console.log 'Error', data
@@ -146,9 +132,137 @@ class Flist extends EventEmitter
 				
 		}
 
+# 财务表格插件
+# 能够增删差改
+class FListTable extends EventEmitter
+	constructor: (options) ->
+		context = @
+		@defaults = 
+			name: 'FListTable'
+			container: @getVal(options.container, $('body'))
+			eventbus: @getVal(options.eventbus, eventbus)
+			table: null
+			datas: null
+			flist: @getVal(options.flist, {})
+		@.on 'FListTable:renderData', context.render
+		@defaults.eventbus.on 'FListTable:renderData', context.render
+		
+		@.on 'FListTable:dataChange', context.dataChange
+		@init()
+
+	dataChange: (res) ->
+		console.log 'FListTable:datachange res: ', res
+		$('#edit-flist').text('Edit')
+		$('#edit-flist').attr('value', 'Save')
+
+	init: () ->
+		table_html = """
+			<div class="ui inverted segment">
+				<button class="ui inverted yellow button" id="edit-flist" value="Save">Edit</button>
+				<button class="ui inverted red button" id="add-flist">New</button>
+			
+				<table class="ui selectable inverted table">
+					<thead>
+						<tr>
+							<th>date</th>
+							<th>cost</th>
+							<th class="left aligned">type</th>
+						</tr>
+					</thead>
+					<tbody>
+					</tbody>
+				</table>
+			</div>
+		"""		
+		table = $(table_html)
+		@defaults.container.append(table)
+		@defaults.table = table
+		context = @
+		table.find('#edit-flist').on 'click', (e) ->
+			console.log 'edit-flist click!'
+			if $(this).attr('value') == 'Save'
+				# change to edit view
+				# create datetimepicker
+				$(this).text('Save')
+				$(this).attr('value', 'Edit')
+				# 时间选择器监听事件
+				$('.time-item').datetimepicker({
+					lang: 'ch'
+					format: 'YYYY-mm-dd'
+					timepicker: false
+					onChangeDateTime: (params, input, event) ->
+						# 各种时间格式
+						console.log arguments, params.getUTCDate(), params.toDateString(), params.toLocaleDateString(), params.toLocaleString(), params.toUTCString()
+						# 目前用的是 toLocaleDateString
+						# $(this).text(params.toLocaleDateString())
+						new_date = params.toLocaleDateString()
+						new_date = new_date.split('/').join('-')
+						input.text(new_date)
+
+					onShow: (params) ->
+						console.log arguments
+					})
+				costInput = (e) ->
+					if $(this).find('input').length == 0
+						old = $(this).text()
+						$(this).attr('val', old)
+						input_html = """<input class="ui inverted input" type="text" value="#{old}"/>"""
+						$(this).html(input_html)
+				$('.cost-item').on 'click', costInput
+				typeInput = (e) ->
+					if $(this).find('input').length == 0
+						old = $(this).text()
+						$(this).attr('val', old)
+						input_html = """<input class="ui inverted input" type="text" value="#{old}"/>"""
+						$(this).html(input_html)
+				$('.type-item').on 'click', typeInput
+			else
+				$('.time-item').datetimepicker('destroy')
+				$.each $('.cost-item'), (i, e) ->
+					$input = $(this).find('input')
+					if $input.length != 0
+						new_val = $(this).attr('val')
+						console.log $(this), $(this).attr('val')
+						reg = /^[a-zA-Z0-9\u4e00-\u9fa5 ]+$/
+
+						if reg.test(new_val) == true
+							console.log 'true while test the reg:', new_val
+							$(this).html($input.attr('value'))
+						else
+							console.log new_val, ' is false while test the reg'
+							$(this).html($(this).attr('val'))
+				# change to save view
+				# request to upate data
+				console.log 'defaults:', context.defaults
+				context.defaults.flist.emit 'FList:dataChange', context.defaults.datas
+	getVal: (obj, defaults) ->
+		return if obj? then obj else defaults
+
+	render: (datas) ->
+		context = @
+		@defaults.datas = datas
+		items_html = ''
+		$.each datas.flist, (i, e) ->
+			date_ = e.date.slice(0, 10)
+			cost_ = e.number
+			type_ = e.tag_arr.join(' ')
+			item_html = """
+				<tr>
+					<td class="time-item">#{date_}</td>
+					<td class="cost-item">#{cost_}</td>
+					<td class="type-item">#{type_}</td>
+				</tr>
+			"""
+			items_html += item_html
+		@defaults.table.find('tbody').html(items_html)
+
+
 options = 
 	name: 'cjs'
 	container: $('.ui.grid.finance .olive.twelve.wide.column')
+	eventbus: eventbus
 
 _flist = new Flist(options)
-console.log _flist.defaults.name
+
+
+# f_list_table: new FListTable(options)
