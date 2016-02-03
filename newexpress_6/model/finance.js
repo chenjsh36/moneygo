@@ -92,19 +92,41 @@ exports.delete = function(id, callback) {
 	});
 }
 
-exports.editMs = function(id, key, val, callback) {
+exports.editMs = function(id, new_obj, callback) {
 	exports.findFinanceById(id, function(err, doc) {
 		if (err) {
 			callback(err);
 		} else {
-			doc.key = val;
-			doc.save(function(err) {
-				if (err) {
-					callback(err);
-				} else {
-					callback(null);
+			if (doc != null) {
+				console.log('find doc of id : ', id, doc, 'new_obj:', new_obj)
+				if (typeof new_obj.date != undefined) {
+					doc.date = new Date(new_obj.date);
 				}
-			})
+				if (typeof new_obj.number != undefined) {
+					doc.number = new_obj.number;
+				}
+				if (typeof new_obj.type_arr != undefined) {
+					doc.type_arr = new_obj.type_arr;
+				}
+				doc.save(function(err) {
+					if (err) {
+						callback(err);
+					} else {
+						callback(null);
+					}
+				})
+				// doc.key = val;
+				// doc.save(function(err) {
+				// 	if (err) {
+				// 		callback(err);
+				// 	} else {
+				// 		callback(null);
+				// 	}
+				// })
+			}
+			else {
+				console.log('could not find id: ', id)
+			}
 		}
 	});
 }

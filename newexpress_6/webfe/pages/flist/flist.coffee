@@ -2,24 +2,6 @@ EventEmitter = require('../../lib/eventemitter2/eventemitter2').EventEmitter2
 eventbus = require('../../own_modules/eventbus/eventbus')
 # PageVisibility = require('../../own_modules/PageVisibility')
 
-# statusChange = (e) ->
-# 	console.log new Date()
-# 	console.log e
-# 	console.log @hidden
-# 	console.log @visibilitystate
-
-# PageVisibility.visibilitychange(statusChange)
-
-# $.ajax({
-# 	type: 'get'
-# 	dataType: 'json'
-# 	url: '/getList'
-# 	success: (data) ->
-# 		console.log data
-# 	error: (data) ->
-# 		console.log 'Error', data
-
-# })
 class Flist extends EventEmitter
 	constructor: (options)->
 		# super.apply @, arguments
@@ -51,10 +33,24 @@ class Flist extends EventEmitter
 	dataChange: (data) ->
 		context = @
 		console.log 'Flist: dataChange:', data
-		setTimeout(()->
-			console.log 'to emit '
-			context.defaults.f_list_table.emit 'FListTable:dataChange', {}
-		, 5000)
+		# setTimeout(()->
+		# 	console.log 'to emit '
+		# 	context.defaults.f_list_table.emit 'FListTable:dataChange', {}
+		# , 5000)
+		send_data = 
+			edit: data 
+		console.log('before send :', send_data);
+		$.ajax {
+			type: 'POST'
+			url: '/edit'
+			data: send_data
+			success: (data) ->
+				console.log data 
+				context.defaults.f_list_table.emit 'FListTable:dataChange', {}
+			error: (data)->
+				console.log data 
+				context.defaults.f_list_table.emit 'FListTable:dataChange', {}
+		}
 
 	###*
 	 * 处理数据
@@ -146,15 +142,15 @@ class FListTable extends EventEmitter
 			flist: @getVal(options.flist, {})
 		@.on 'FListTable:renderData', context.render
 		@defaults.eventbus.on 'FListTable:renderData', context.render
-		
 		@.on 'FListTable:dataChange', context.dataChange
 		@init()
+	# 数据修改完成后
 
 	dataChange: (res) ->
 		console.log 'FListTable:datachange res: ', res
 		$('#edit-flist').text('Edit')
 		$('#edit-flist').attr('value', 'Save')
-
+	# 初始化html和时间监听
 	init: () ->
 		table_html = """
 			<div class="ui inverted segment">
@@ -178,6 +174,7 @@ class FListTable extends EventEmitter
 		@defaults.container.append(table)
 		@defaults.table = table
 		context = @
+		# 修改按钮
 		table.find('#edit-flist').on 'click', (e) ->
 			console.log 'edit-flist click!'
 			if $(this).attr('value') == 'Save'
@@ -217,37 +214,57 @@ class FListTable extends EventEmitter
 						$(this).html(input_html)
 				$('.type-item').on 'click', typeInput
 			else
+				# 保存修改后的数据
 				$('.time-item').datetimepicker('destroy')
 				$.each $('.cost-item'), (i, e) ->
 					$input = $(this).find('input')
 					if $input.length != 0
-						new_val = $(this).attr('val')
-						console.log $(this), $(this).attr('val')
+						# new_val = $(this).attr('val')
+						new_val = $input.val()
+						console.log $(this), $(this).attr('val'), new_val
 						reg = /^[a-zA-Z0-9\u4e00-\u9fa5 ]+$/
 
 						if reg.test(new_val) == true
 							console.log 'true while test the reg:', new_val
-							$(this).html($input.attr('value'))
+							$(this).html(new_val)
 						else
 							console.log new_val, ' is false while test the reg'
 							$(this).html($(this).attr('val'))
 				# change to save view
 				# request to upate data
 				console.log 'defaults:', context.defaults
+				# 更新已修改的数据，然后触发flist的datachange:
+				$f_list = context.defaults.container.find('tbody tr')
+				f_list_data = []
+				$.each $f_list, (i, e) ->
+					time = $f_list.eq(i).find('.time-item').text()
+					cost = $f_list.eq(i).find('.cost-item').text()
+					type = $f_list.eq(i).find('.type-item').text()
+					id = $f_list.eq(i).attr('alt')
+					f_list_data.push {
+						id: id
+						date : time
+						number : cost 
+						tag_arr : type
+					}
+				context.defaults.datas = f_list_data
 				context.defaults.flist.emit 'FList:dataChange', context.defaults.datas
+				$('.cost-item').unbind('click')
 	getVal: (obj, defaults) ->
 		return if obj? then obj else defaults
 
 	render: (datas) ->
 		context = @
 		@defaults.datas = datas
+		console.log datas
 		items_html = ''
 		$.each datas.flist, (i, e) ->
 			date_ = e.date.slice(0, 10)
 			cost_ = e.number
 			type_ = e.tag_arr.join(' ')
+			id_ = e.id
 			item_html = """
-				<tr>
+				<tr alt="#{id_}">
 					<td class="time-item">#{date_}</td>
 					<td class="cost-item">#{cost_}</td>
 					<td class="type-item">#{type_}</td>

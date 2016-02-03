@@ -97,7 +97,20 @@ app.get('/getList', function(req, res) {
 			console.log('finde all err', err);
 			res.json({retCode: '400', err: err, data: []});
 		} else {
-			res.json({ret_code: '200', data: doc});
+			var f_len = doc.length,
+				i = 0,
+				ret_doc = [];
+			for(; i < f_len; i++) {
+				ret_doc.push({
+					belong_id: doc[i].belong_id,
+					date: doc[i].date,
+					id: doc[i].id.toString(),
+					number: doc[i].number,
+					tag_arr: doc[i].tag_arr,
+					type_id: doc[i].type_id
+				})
+			}
+			res.json({ret_code: '200', data: ret_doc});
 		}
 	})
 });
@@ -150,6 +163,14 @@ app.post('/search', function(req, res) {
 });
 
 app.post('/edit', function(req, res) {
+	var edit = req.body.edit;
+	console.log('edit:', edit);
+	for (var i = 0, len = edit.length; i < len; i++) {
+		finance_db.editMs(edit[i].id, edit[i], function(err) {
+			console.log(err);
+		})
+	}
+	// finance_db.editMs()
 });
 
 
