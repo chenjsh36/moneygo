@@ -1,3 +1,9 @@
+.display-none {
+  display: none;
+}
 .finance {
   margin-top: 0 !important;
+}
+.new-finance-form {
+  display: none;
 }

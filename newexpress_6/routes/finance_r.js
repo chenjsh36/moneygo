@@ -70,28 +70,8 @@ app.get(['/', '/list'], function(req, res) {
 		}
 	});
 });
-// 获取该用户的所有数据
+// 获取该用户的所有数据(消费记录)
 app.get('/getList', function(req, res) {
-	// var username = getCookie(req, 'username')
-	// 	, user_id = ''
-	// 	, user_flist
-	// 	;
-	// user = user_db.findUser({real_name: username}, function(err, doc) {
-	// 	if (err) {
-	// 		console.log('使用cookie查找该用户名找不到！');
-	// 		res.redirect('/user/login');
-	// 	} else {
-	// 		user_id = doc['_id'];
-	// 		finance_db.find({belong_id: user_id}, function(err, docs) {
-	// 			if (err) {
-	// 				console.log('查到该用户的财务数据失败！');
-	// 				res.redirect('/');
-	// 			} else {
-	// 				res.json(docs);
-	// 			}
-	// 		})
-	// 	}
-	// })
 	finance_db.allToFinance(function(err, doc) {
 		if (err) {
 			console.log('finde all err', err);
@@ -114,6 +94,7 @@ app.get('/getList', function(req, res) {
 		}
 	})
 });
+
 app.post('/add', function(req, res) {
 	var number = req.body.number
 		, date = req.body.date
@@ -131,24 +112,21 @@ app.post('/add', function(req, res) {
 				// 该用户名不存在，返回错误
 				res.send('用户不存在！');
 			} else {
-				console.log('用户名存在', doc);
-				var user_id = doc[0]['_id'];
-				console.log('userId is :', user_id);
-
+				console.log('用户名存在，信息如下', doc, '即将添加消费记录');
+				var user_id = doc['_id'];
 				var new_finance = {
 					belong_id: user_id.toString(),
 					number: number,
-					date: new Date(),
+					date: new Date(date),
 					type_id: type_id,
-					tag_arr: ['教育', '生活']
+					tag_arr: tag_arr
 				};
-
+				// 添加到数据库，成功返回200， 失败返回404
 				finance_db.add(new_finance, function(err) {
 					if (err) {
-						res.render('flist', {success: false, err: err.errors});
+						res.json({ret_code: '404', data: 'add fail'});
 					} else {
-						res.redirect('list');
-						// res.send('add ok');
+						res.json({ret_code: '200', data: 'add ok'});
 					}
 				});
 			}
@@ -157,6 +135,43 @@ app.post('/add', function(req, res) {
 });
 
 app.post('/del', function(req, res) {
+	var finance_id = req.body.finance_id
+	;
+	var username_ = getCookie(req, 'username');
+	user_db.findUser({real_name: username_}, function(err, doc) {
+		if (err) {
+			console.log('not found user , and err is ', err.errors);
+		} else {
+			console.log('no err, and find user is ', doc, doc.length);
+			if (doc.length === 0) {
+				// 该用户名不存在，返回错误
+				res.send('用户不存在！');
+			} else {
+				console.log('用户名存在，信息如下', doc, '即将删除消费记录');
+				var user_id = doc['_id'];
+				var finance_ms = {
+					belong_id: user_id,
+					_id: finance_id
+				}
+
+				// 添加到数据库，成功返回200， 失败返回404
+				finance_db.findFinance(finance_ms, function(err) {
+					if (err) {
+						res.json({ret_code: '404', data: 'not found'});
+					} else {
+						console.log('has found finance_ms, and going to delete!');
+						finance_db.delete(finance_ms._id, function(err) {
+							if (err) {
+								res.json({ret_code: '404', data: 'delete finance fail'});
+							} else {
+								res.json({ret_code: '200', data: 'delete success!'});
+							}
+						});
+					}
+				});
+			}
+		}
+	})
 });
 
 app.post('/search', function(req, res) {

@@ -2,6 +2,9 @@ EventEmitter = require('../../lib/eventemitter2/eventemitter2').EventEmitter2
 eventbus = require('../../own_modules/eventbus/eventbus')
 # PageVisibility = require('../../own_modules/PageVisibility')
 
+# 数据中心
+data_center = {}
+
 class Flist extends EventEmitter
 	constructor: (options)->
 		# super.apply @, arguments
@@ -82,23 +85,15 @@ class Flist extends EventEmitter
 		@datas = 
 			has_data: has_data
 			flist: flist
+		data_center.flist = flist
 		return has_data
 
 	###*
 	 * 返回obj的值，不存在则返回defaults
-	 * @param  {obj} obj      对象的属性值
-	 * @param  {obj} defaults 默认值
-	 * @return {obj}          返回值
 	###
 	getVal: (obj, defaults) ->
 		return if obj? then obj else defaults
 	
-	# initHtml: () ->
-	# 	c_html_ = """
-	# 		<div class="olive twelve wide column"></div>
-	# 	"""
-	# 	@defaults.container.html c_html_ 
-
 	###*
 	 * 读取对象的datas并渲染对象
 	 * @return {obj} 当前对象
@@ -127,6 +122,11 @@ class Flist extends EventEmitter
 				callback(data)
 				
 		}
+	show: () ->
+		@defaults.container.show()
+
+	hide: () ->
+		@defaults.container.hide()
 
 # 财务表格插件
 # 能够增删差改
@@ -156,13 +156,28 @@ class FListTable extends EventEmitter
 			<div class="ui inverted segment">
 				<button class="ui inverted yellow button" id="edit-flist" value="Save">Edit</button>
 				<button class="ui inverted red button" id="add-flist">New</button>
-			
+				<div class="new-finance-form">
+					<label for="time">时间</label>
+					<div class="ui input">
+						<input type="text" id="new-finance-time" date-time-format="YYYY-mm-dd">
+					</div>
+					<label for="cost">总额</label>
+					<div class="ui input">
+						<input type="text" id="new-finance-cost" class="ui inverted input">
+					</div>
+					<label for="time">类型</label>
+					<div class="ui input">
+						<input type="text" id="new-finance-type" class="ui inverted input">
+					</div>
+					<button id="save-new-finance" class="ui button">保存</button>
+				</div>
 				<table class="ui selectable inverted table">
 					<thead>
 						<tr>
 							<th>date</th>
 							<th>cost</th>
 							<th class="left aligned">type</th>
+							<th class="operate-item-head display-none">operate</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -174,7 +189,57 @@ class FListTable extends EventEmitter
 		@defaults.container.append(table)
 		@defaults.table = table
 		context = @
-		# 修改按钮
+		
+		# 初始化新建消费记录的时间选择器
+		table.find('#new-finance-time').datetimepicker({
+			lang: 'ch'
+			format: 'Y-m-d'
+			timepicker: false
+			onChangeDateTime: (params, input, event) ->
+				# event.preventDefault()
+				# event.stopPropagation()
+				# console.log 'change date!!'
+				# console.log arguments, params.getUTCDate(), params.toDateString(), params.toLocaleDateString(), params.toLocaleString(), params.toUTCString()
+				# new_date = params.toLocaleDateString()
+				# new_date = new_date.split('/').join('-')
+				# console.log 'new date is ', new_date, ' and input is ', input
+				# input.val(new_date)
+			onShow: (params) ->
+				# console.log arguments
+		})
+		table.find('#save-new-finance').on 'click', (e) ->
+			$form = $(this).closest('.new-finance-form')
+			time = $form.find('#new-finance-time').val()
+			cost = $form.find('#new-finance-cost').val()
+			type = $form.find('#new-finance-type').val()
+			console.log 'show data:', time, cost, type
+			if time == '' or cost == '' or type == ''
+				alert('请填写完整的消费记录！')
+			if isNaN(cost)
+				alert('请填写合法的金额')
+			else
+				send_data = 
+					date: time
+					number: cost
+					tag_arr: type
+					type_id: 0
+				$.ajax({
+					type: 'POST'
+					url: '/add'
+					data: send_data
+					success: (data) ->
+						console.log 'success:', data 
+						if data.ret_code == '200'
+							alert '添加成功'
+						else 
+							alert '更新失败'
+						location.reload()
+					error: (data) ->
+						alert '添加失败'
+						location.reload()
+						# console.log 'error:', data
+					})
+		# 修改按钮点击事件监听
 		table.find('#edit-flist').on 'click', (e) ->
 			console.log 'edit-flist click!'
 			if $(this).attr('value') == 'Save'
@@ -212,9 +277,13 @@ class FListTable extends EventEmitter
 						$(this).attr('val', old)
 						input_html = """<input class="ui inverted input" type="text" value="#{old}"/>"""
 						$(this).html(input_html)
-				$('.type-item').on 'click', typeInput
+				$('.type-item').on 'click', typeInput	
+				# 显示删除的选项
+				$('.operate-item-head').removeClass('display-none')
+				$('.operate-item').removeClass('display-none')
+			# 保存修改后的数据
 			else
-				# 保存修改后的数据
+				# 取消时间选择器
 				$('.time-item').datetimepicker('destroy')
 				$.each $('.cost-item'), (i, e) ->
 					$input = $(this).find('input')
@@ -229,6 +298,14 @@ class FListTable extends EventEmitter
 							$(this).html(new_val)
 						else
 							console.log new_val, ' is false while test the reg'
+							$(this).html($(this).attr('val'))
+				$.each $('.type-item'), (i, e) ->
+					$input = $(this).find('input')
+					if $input.length != 0
+						new_val = $input.val()
+						if new_val != ''
+							$(this).html(new_val)
+						else
 							$(this).html($(this).attr('val'))
 				# change to save view
 				# request to upate data
@@ -249,7 +326,36 @@ class FListTable extends EventEmitter
 					}
 				context.defaults.datas = f_list_data
 				context.defaults.flist.emit 'FList:dataChange', context.defaults.datas
+				# 取消绑定
 				$('.cost-item').unbind('click')
+				$('.type-item').unbind('click')
+				# 隐藏删除选项
+				$('.operate-item-head').addClass('display-none')
+				$('.operate-item').addClass('display-none')
+		# 添加按钮点击事件监听
+		table.find('#add-flist').on 'click', (e) ->
+			console.log 'to add new finance'
+			context.defaults.container.find('.new-finance-form').show()
+		# 删除按钮点击事件监听
+		table.find('tbody').on 'click', '.operate-item', (e) ->
+			that = $(this).closest('tr')
+			finance_id = that.attr('alt')
+			send_data = 
+				finance_id: finance_id
+			$.ajax({
+				type: 'POST'
+				url: '/del'
+				data: send_data
+				success: (data) ->
+					if data.ret_code == '200'
+						console.log 'delete ok!'
+						that.remove()
+					else
+						console.log 'delete fail'
+				error: (data) ->
+					console.log 'delete fail'
+			})
+
 	getVal: (obj, defaults) ->
 		return if obj? then obj else defaults
 
@@ -268,18 +374,248 @@ class FListTable extends EventEmitter
 					<td class="time-item">#{date_}</td>
 					<td class="cost-item">#{cost_}</td>
 					<td class="type-item">#{type_}</td>
+					<td class="operate-item display-none">delete</td>
 				</tr>
 			"""
 			items_html += item_html
 		@defaults.table.find('tbody').html(items_html)
 
+# 对收入支出做统计，可视化
+class CostChartShow extends EventEmitter
+	constructor: (options) ->
+		@defaults = 
+			container: @getVal(options.container, $('body'))
+			
+		@init()
+	init: () ->
+		chart_html = """
+			<div id="cost-chart-container" class="chart_container" style="width: 600px; height: 400px;"></div>
+		"""
+		@defaults.container.hide()
+		@defaults.container.html(chart_html)
+		if data_center.flist != null
+			@defaults.data = data_center.flist
+			@showCostChart()
+	showCostChart: () ->
+		if data_center.flist == null or typeof data_center.flist == 'undefined'
+			return
+		else 
+			flist_ = data_center.flist
+			console.log 'flist_:', flist_
+			date = []
+			data = []
+			for f in flist_
+				date.push f.date.slice(0, 10)
+				data.push f.number
+			cost_chart = echarts.init($('#cost-chart-container')[0])
+
+			# base = (new Date(2015, 9, 4)).valueOf()
+			# oneDay = 24 * 3600 * 1000
+			# date = []
+			# data = [Math.random() * 150]
+
+			# for i in [0..100]
+			# 	now  = new Date(base += oneDay)
+			# 	date.push([now.getFullYear(), now.getMonth() + 1, now.getDate()].join('-'))
+			# 	data.push((Math.random() - .4) * 20) + data[i - 1];
+			option = {
+				title: {
+					x: 'center',
+					text: '收入支出',
+				},
+				legend: {
+					top: 'bottom',
+					data:['意向']
+				},
+				toolbox: {
+					show: true,
+					feature: {
+						mark: {show: true},
+						dataView: {show: true, readOnly: false},
+						magicType: {show: true, type: ['line', 'bar', 'stack', 'tiled']},
+						restore: {show: true},
+						saveAsImage: {show: true}
+					}
+				},
+				xAxis: [
+					{
+						type: 'category',
+						boundaryGap: false,
+						data: date
+					}
+				],
+				yAxis: [
+					{
+						type: 'value',
+						# max: 500
+					}
+				],
+				dataZoom: {
+					type: 'inside',
+					start: 60,
+					end: 80
+				},
+				series: [
+					{
+						name:'成交',
+						type:'line',
+						smooth:true,
+						symbol: 'none',
+						stack: 'a',
+						areaStyle: {
+							normal: {}
+						},
+						data: data
+					}
+				]
+			}
+
+			cost_chart.setOption(option)
+	
+	###*
+	 * 返回obj的值，不存在则返回defaults
+	###
+	getVal: (obj, defaults) ->
+		return if obj? then obj else defaults
+	
+	show: () ->
+		@showCostChart()
+		@defaults.container.show()
+
+	hide: () ->
+		@defaults.container.hide()
+
+# 对消费范围做统计，可视化
+class RangeChartShow extends EventEmitter
+	constructor: (options) ->
+		@defaults = 
+			container: @getVal(options.container, $('body'))
+		@init()
+	init: () ->
+		chart_html = """
+			<div id="range-chart-container" class="chart_container" style="width: 600px; height: 400px;"></div>
+		"""
+		@defaults.container.hide()
+		@defaults.container.html(chart_html)
+		if data_center.flist != null
+			@defaults.data = data_center.flist
+			@showCostChart()
+		# code here!!!!!!!!!!!!!
+	update: () ->
+		if data_center.flist != null
+			@defaults.data = data_center.flist
+			@showRangeChart()
+
+	showRangeChart: () ->
+		console.log 'to show showRangeChart'
+		if data_center.flist == null or typeof data_center.flist == 'undefined'
+			return
+		else
+
+			option = {
+			    backgroundColor: '#2c343c',
+
+			    title: {
+			        text: 'Customized Pie',
+			        left: 'center',
+			        top: 20,
+			        textStyle: {
+			            color: '#ccc'
+			        }
+			    },
+
+			    tooltip : {
+			        trigger: 'item',
+			        formatter: "{a} <br/>{b} : {c} ({d}%)"
+			    },
+
+			    visualMap: {
+			        show: false,
+			        min: 80,
+			        max: 600,
+			        inRange: {
+			            colorLightness: [0, 1]
+			        }
+			    },
+			    series : [
+			        {
+			            name:'访问来源',
+			            type:'pie',
+			            radius : '55%',
+			            center: ['50%', '50%'],
+			            data:[
+			                {value:335, name:'直接访问'},
+			                {value:310, name:'邮件营销'},
+			                {value:274, name:'联盟广告'},
+			                {value:235, name:'视频广告'},
+			                {value:400, name:'搜索引擎'}
+			            ].sort(function (a, b) { return a.value - b.value}),
+			            roseType: 'angle',
+			            label: {
+			                normal: {
+			                    textStyle: {
+			                        color: 'rgba(255, 255, 255, 0.3)'
+			                    }
+			                }
+			            },
+			            labelLine: {
+			                normal: {
+			                    lineStyle: {
+			                        color: 'rgba(255, 255, 255, 0.3)'
+			                    },
+			                    smooth: 0.2,
+			                    length: 10,
+			                    length2: 20
+			                }
+			            },
+			            itemStyle: {
+			                normal: {
+			                    color: '#c23531',
+			                    shadowBlur: 200,
+			                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+			                }
+			            }
+			        }
+			    ]
+			};
+
+	###*
+	 * 返回obj的值，不存在则返回defaults
+	###
+	getVal: (obj, defaults) ->
+		return if obj? then obj else defaults
+	show: () ->
+		@update()
+		@defaults.container.show()
+
+	hide: () ->
+		@defaults.container.hide()
 
 options = 
 	name: 'cjs'
-	container: $('.ui.grid.finance .olive.twelve.wide.column')
+	container: $('.ui.grid.finance .olive.twelve.wide.column .finance-table')
 	eventbus: eventbus
 
 _flist = new Flist(options)
 
 
-# f_list_table: new FListTable(options)
+cost_options = 
+	container: $('.ui.grid.finance .olive.twelve.wide.column .cost-chart')
+_cost = new CostChartShow(cost_options)
+
+# 边栏事件监听
+# 显示消费列表
+$('#finance-list').on 'click', (e) ->
+	console.log 'to show finance-list'	
+	_flist.show()
+	_cost.hide()
+
+$('#finance-cost').on 'click', (e) ->
+	console.log 'to show cost area'
+	_flist.hide()
+	_cost.show()
+
+$('#finance-type').on 'click', (e) ->
+	console.log 'to show type'
+	_flist.hide()
+	_cost.hide()

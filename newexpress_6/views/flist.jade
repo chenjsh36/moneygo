@@ -20,26 +20,26 @@ block content
 	//- 		input(type="submit" value="提交")
 	.ui.grid.finance
 		.grey.four.wide.column
-			.ui.secondary.vertical.inverted.fluid.menu
-				.item.active 财务列表
-				.item 财务状况
+			.ui.secondary.inverted.fluid.vertical.menu.side-bar
+				.item
+					.header 列表
+					.menu
+						a#finance-list.item.active(href="javascript: void(0)") 列表
 				.item 
 					.header 统计信息
 					.menu
-						.item 支出收入
-						.item 花费范围
+						a#finance-cost.item(href="javascript: void(0)") 出入
+						a#finance-type.item(href="javascript: void(0)") 花费范围
 
 		.olive.twelve.wide.column
-		//- 		if (flist)
-		//- 			- for (var e in flist)
-		//- 				p= flist[e]
-		//- 				div.ui.ignored.message
-		//- 					span= flist[e]['date']
-		//- 					span= flist[e]['number']
+			.finance-table
+			.cost-chart
 
+			.range-chart
 		
 block footer
 
 block scripts
 	script(src="/static/lib/datetimepicker/jquery.datetimepicker.full.js")
+	script(src="/static/lib/echarts/echarts.min.js")
 	script(src="/static/pages/flist/flist.js")

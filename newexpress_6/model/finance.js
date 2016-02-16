@@ -149,7 +149,6 @@ exports.forAll = function(doEach, done) {
 }
 
 exports.findFinance = function(finance, done) {
-	console.log('findUser:', user);
 	Finance.find(finance, function(err, doc) {
 		if (err) {
 			console.log('findFinance: is err');
