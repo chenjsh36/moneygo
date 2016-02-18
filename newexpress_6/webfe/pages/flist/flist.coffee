@@ -499,19 +499,28 @@ class RangeChartShow extends EventEmitter
 		@defaults.container.html(chart_html)
 		if data_center.flist != null
 			@defaults.data = data_center.flist
-			@showCostChart()
-		# code here!!!!!!!!!!!!!
+			@showRangeChart()
+
 	update: () ->
 		if data_center.flist != null
 			@defaults.data = data_center.flist
 			@showRangeChart()
 
 	showRangeChart: () ->
-		console.log 'to show showRangeChart'
 		if data_center.flist == null or typeof data_center.flist == 'undefined'
 			return
-		else
+		else 
+			tag_map = {}
+			for f in data_center.flist
+				tag_arr = f.tag_arr
+				for t in tag_arr
+					if tag_map[t]?
+						tag_map[t]++
+					else
+						tag_map[t] = 0
+			console.log 'tag_map:', tag_map
 
+			cost_chart = echarts.init($('#range-chart-container')[0])
 			option = {
 			    backgroundColor: '#2c343c',
 
@@ -549,7 +558,7 @@ class RangeChartShow extends EventEmitter
 			                {value:274, name:'联盟广告'},
 			                {value:235, name:'视频广告'},
 			                {value:400, name:'搜索引擎'}
-			            ].sort(function (a, b) { return a.value - b.value}),
+			            ].sort( (a, b)->  return a.value - b.value),
 			            roseType: 'angle',
 			            label: {
 			                normal: {
@@ -578,6 +587,7 @@ class RangeChartShow extends EventEmitter
 			        }
 			    ]
 			};
+			cost_chart.setOption(option)
 
 	###*
 	 * 返回obj的值，不存在则返回defaults
@@ -603,19 +613,26 @@ cost_options =
 	container: $('.ui.grid.finance .olive.twelve.wide.column .cost-chart')
 _cost = new CostChartShow(cost_options)
 
+range_options = 
+	container: $('.ui.grid.finance .olive.twelve.wide.column .range-chart')
+_range = new RangeChartShow(range_options)
+
+
 # 边栏事件监听
 # 显示消费列表
 $('#finance-list').on 'click', (e) ->
 	console.log 'to show finance-list'	
 	_flist.show()
 	_cost.hide()
-
+	_range.hide()
 $('#finance-cost').on 'click', (e) ->
 	console.log 'to show cost area'
 	_flist.hide()
 	_cost.show()
+	_range.hide()
 
 $('#finance-type').on 'click', (e) ->
 	console.log 'to show type'
 	_flist.hide()
 	_cost.hide()
+	_range.show()
