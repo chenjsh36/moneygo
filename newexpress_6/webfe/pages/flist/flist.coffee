@@ -404,11 +404,19 @@ class CostChartShow extends EventEmitter
 			console.log 'flist_:', flist_
 			date = []
 			data = []
+			cal_data = {}
 			for f in flist_
-				date.push f.date.slice(0, 10)
-				data.push f.number
+				# date.push f.date.slice(0, 10)
+				# data.push f.number
+				date_ = f.date.slice(0, 10)
+				if cal_data[date_]?
+					cal_data[date_] += f.number
+				else
+					cal_data[date_] = f.number
+			for c of cal_data
+				date.push c
+				data.push cal_data[c]
 			cost_chart = echarts.init($('#cost-chart-container')[0])
-
 			# base = (new Date(2015, 9, 4)).valueOf()
 			# oneDay = 24 * 3600 * 1000
 			# date = []
@@ -423,12 +431,12 @@ class CostChartShow extends EventEmitter
 					x: 'center',
 					text: '收入支出',
 				},
-				legend: {
-					top: 'bottom',
-					data:['意向']
-				},
+				# legend: {
+				# 	top: 'bottom',
+				# 	data:['意向']
+				# },
 				toolbox: {
-					show: true,
+					show: false,
 					feature: {
 						mark: {show: true},
 						dataView: {show: true, readOnly: false},
@@ -517,13 +525,18 @@ class RangeChartShow extends EventEmitter
 					if tag_map[t]?
 						tag_map[t]++
 					else
-						tag_map[t] = 0
+						tag_map[t] = 1
 			console.log 'tag_map:', tag_map
+			data = []
+			for t of tag_map
+				data.push {
+					name: t,
+					value: tag_map[t]
+				}
 
 			cost_chart = echarts.init($('#range-chart-container')[0])
 			option = {
 			    backgroundColor: '#2c343c',
-
 			    title: {
 			        text: 'Customized Pie',
 			        left: 'center',
@@ -543,22 +556,16 @@ class RangeChartShow extends EventEmitter
 			        min: 80,
 			        max: 600,
 			        inRange: {
-			            colorLightness: [0, 1]
+			            colorLightness: [0.2, 1]
 			        }
 			    },
 			    series : [
 			        {
-			            name:'访问来源',
+			            name:'消费领域',
 			            type:'pie',
 			            radius : '55%',
 			            center: ['50%', '50%'],
-			            data:[
-			                {value:335, name:'直接访问'},
-			                {value:310, name:'邮件营销'},
-			                {value:274, name:'联盟广告'},
-			                {value:235, name:'视频广告'},
-			                {value:400, name:'搜索引擎'}
-			            ].sort( (a, b)->  return a.value - b.value),
+			            data:data.sort( (a, b)->  return a.value - b.value),
 			            roseType: 'angle',
 			            label: {
 			                normal: {
@@ -601,6 +608,79 @@ class RangeChartShow extends EventEmitter
 	hide: () ->
 		@defaults.container.hide()
 
+
+# 对个人的消费做词云的可视化
+class WordCloud extends EventEmitter
+	constructor: (options) ->
+		@defaults = 
+			container: @getVal(options.container, $('body'))
+		@init()
+	init: () ->
+		d3_html = """
+			<div id="word-cloud-container" class="chart_container" style="width: 1200px; height: 800px;"></div>
+		"""
+		@defaults.container.hide()
+		@defaults.container.html(d3_html)
+		if data_center.flist != null
+			@defaults.data = data_center.flist
+			@showWordCloud()
+
+	update: () ->
+		if data_center.flist != null
+			@defaults.data = data_center.flist
+			@showWordCloud()
+
+	showWordCloud: () ->
+		if data_center.flist == null or typeof data_center.flist == 'undefined'
+			console.log('not ok')
+			return
+		else 
+			draw = (words) ->
+				console.log('to draw')
+				d3.select("#word-cloud-container").append("svg")
+						.attr("width", 1200)
+						.attr("height", 800)
+					.append("g")
+						.attr("transform", "translate(500,500)")
+					.selectAll("text")
+						.data(words)
+					.enter().append("text")
+						.style("font-size", (d) -> return d.size + "px" )
+						.attr("text-anchor", "middle")
+						.attr("transform", (d) ->
+							return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")"
+						)
+						.text((d) -> return d.text )
+			console.log('ok')
+			rx = [.1, .1, .1, .2, .9, .7, .7, .9, .9]
+			ry = [.1, .1, .2, .1, .9, .7, .7, .7, .7]
+			font_size = [69, 50, 109, 104, 93, 78, 76, 73, 70]
+			d3.layout.cloud().size([1000, 1000])
+					.words([
+						"Hello", "world", "normally", "you", "want", "more", "words",
+						"than", "this"].map((d, i) ->
+						return {text: d, size: font_size[i], origin_x: rx[i], origin_y: ry[i]}
+					))
+					.rotate(() -> return ~~(Math.random() * 2) * 360 )
+					.fontSize((d) -> return d.size )
+					.on("end", draw)
+					.start()
+
+			
+	getVal: (obj, defaults) ->
+		return if obj? then obj else defaults
+
+	show: () ->
+		@defaults.container.show()
+		@update()
+		
+
+	hide: () ->
+		@defaults.container.hide()
+
+
+
+
 options = 
 	name: 'cjs'
 	container: $('.ui.grid.finance .olive.twelve.wide.column .finance-table')
@@ -617,6 +697,11 @@ range_options =
 	container: $('.ui.grid.finance .olive.twelve.wide.column .range-chart')
 _range = new RangeChartShow(range_options)
 
+word_options = 
+	container: $('.ui.grid.finance .olive.twelve.wide.column .word-cloud')
+_word_cloud = new WordCloud(word_options)
+
+
 
 # 边栏事件监听
 # 显示消费列表
@@ -625,14 +710,24 @@ $('#finance-list').on 'click', (e) ->
 	_flist.show()
 	_cost.hide()
 	_range.hide()
+	_word_cloud.hide()
+
 $('#finance-cost').on 'click', (e) ->
 	console.log 'to show cost area'
 	_flist.hide()
 	_cost.show()
 	_range.hide()
+	_word_cloud.hide()
 
 $('#finance-type').on 'click', (e) ->
 	console.log 'to show type'
 	_flist.hide()
 	_cost.hide()
 	_range.show()
+	_word_cloud.hide()
+$('#d3-cloud').on 'click', (e) ->
+	console.log 'to show word-cloud'
+	_flist.hide()
+	_cost.hide()
+	_range.hide()
+	_word_cloud.show()

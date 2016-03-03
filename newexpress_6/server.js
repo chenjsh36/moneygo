@@ -11,6 +11,7 @@ var express = require('express')
 	, account_r = require('./routes/account') // 用户登录、注册、退出路由
 	, cash_r = require('./routes/cash') // 测试路由
 	, finance_r = require('./routes/finance_r') // 财务路由
+	, file_r = require('./routes/file_r')
 	, mongo_db = require('./module/db') // 纯mongodb使用
 	, methodOverride = require('method-override')// 错误处理中间件定义一般在最后
 	;
@@ -52,12 +53,11 @@ app.use(cookieParser());
  */
 
 // 用户登陆、注册、退出
-
 app.use('/user', account_r);
-app.use('/', finance_r);
 // 个人财务支出情况
+app.use('/', finance_r);
 // app.use('/cash', cash_r);
-
+app.use('/upload', file_r);
 // 为静态文件添加路径
 app.use('/static', express.static('public'));
 

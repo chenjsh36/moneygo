@@ -30,15 +30,26 @@ block content
 					.menu
 						a#finance-cost.item(href="javascript: void(0)") 出入
 						a#finance-type.item(href="javascript: void(0)") 花费范围
-
+				.item
+					.header 词云的可视化
+					.menu
+						a.item(href="https://www.jasondavies.com/wordcloud/" target="_blank") 原始词云
+						a#d3-cloud.item(href="javascript: void(0)") 改进词云
 		.olive.twelve.wide.column
 			.finance-table
 			.cost-chart
 			.range-chart
-		
+			.word-cloud
+
 block footer
 
 block scripts
+	//- 时间选择器
 	script(src="/static/lib/datetimepicker/jquery.datetimepicker.full.js")
+	//- ECharts
 	script(src="/static/lib/echarts/echarts.min.js")
+	//- D3JS
+	script(src="/static/lib/d3/d3.v3.min.js")
+	script(src="/static/lib/d3/d3.layout.cloud.js")
+	//- 脚本
 	script(src="/static/pages/flist/flist.js")
